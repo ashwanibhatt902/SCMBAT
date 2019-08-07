@@ -33,6 +33,7 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
@@ -58,6 +59,89 @@ import Execute.Warn;
 
 public class Exec {
 		
+	public static String ExecuteCompatiabilityTestFromCLI(List<String> txModelsFilePaths,
+			List<String> rxModelsFilePaths) {
+
+		StringBuilder errorMessage = new StringBuilder();
+		final Logger logger = Logger.getLogger(Exec.class);
+		ArrayList<TxModel> TxData = new ArrayList<TxModel>();
+		ArrayList<RxModel> RxData = new ArrayList<RxModel>();
+		MethodAnalysis methAn = new MethodAnalysis();
+		int[] txBoxIndices = new int[txModelsFilePaths.size()];
+		int[] rxBoxIndices = new int[rxModelsFilePaths.size()];
+
+		ArrayList<Model> TxArray = new ArrayList<Model>();
+		ArrayList<Model> RxArray = new ArrayList<Model>();
+
+		for (int i = 0; i < txModelsFilePaths.size(); i++) {
+			File file = new File(txModelsFilePaths.get(i));
+			txBoxIndices[i] = i;
+			if (file.exists() && !file.isDirectory()) {
+				System.out.println("File Exists");
+				logger.info("File Exists");
+				Model model = new Model();
+				model.ModelName = file.getName();
+				model.ModelPath = file.getAbsolutePath();
+				TxArray.add(model);
+			}
+			try {
+				JAXBContext TxContext = JAXBContext.newInstance(TxModel.class);
+				Unmarshaller TxUnmarshaller = TxContext.createUnmarshaller();
+				JAXBElement<TxModel> TxElement = TxUnmarshaller.unmarshal(new StreamSource(file), TxModel.class);
+
+				TxData.add(TxElement.getValue());
+				System.out.println(TxData.get(i).toString());
+				logger.debug(TxData.get(i).toString());
+			} catch (Exception exp) {
+
+				errorMessage.append("\nIncorrect Format - File is of invalid format");
+			}
+		}
+		for (int i = 0; i < rxModelsFilePaths.size(); i++) {
+			File file = new File(rxModelsFilePaths.get(i));
+			txBoxIndices[i] = i;
+			if (file.exists() && !file.isDirectory()) {
+				System.out.println("File Exists");
+				logger.info("File Exists");
+				Model model = new Model();
+				model.ModelName = file.getName();
+				model.ModelPath = file.getAbsolutePath();
+				RxArray.add(model);
+			}
+
+			try {
+				JAXBContext RxContext = JAXBContext.newInstance(RxModel.class);
+				Unmarshaller RxUnmarshaller = RxContext.createUnmarshaller();
+				JAXBElement<RxModel> RxElement = RxUnmarshaller.unmarshal(new StreamSource(file), RxModel.class);
+
+				RxData.add(RxElement.getValue());
+				System.out.println(RxData.get(i).toString());
+				logger.debug(RxData.get(i).toString());
+			} catch (Exception exp) {
+
+				errorMessage.append("\nIncorrect Format - File is of invalid format");
+			}
+		}
+		try {
+
+			String ratedMethod = methAn.analyseRatedMethod(TxData, RxData);
+			System.out.println(ratedMethod);
+			logger.debug(ratedMethod);
+			methAn.execCompat(ratedMethod, txBoxIndices, TxData, TxArray, rxBoxIndices, RxData, RxArray);
+			if (methAn.warningFlag) {
+				new Warn().showWarnings("Systems Compatible", methAn.warningMessage);
+				methAn.warningFlag = false;
+				methAn.warningMessage = "\n";
+			}
+
+		} catch (Exception exp) {
+
+			errorMessage.append("Warning " + methAn.warningMessage);
+		}
+
+		return errorMessage.toString();
+	}
+	
 	JPanel panel = new JPanel();
 	JButton Back = new JButton("Back");
 	JButton Execute = new JButton("Execute");

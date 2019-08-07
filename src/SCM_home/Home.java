@@ -34,7 +34,9 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -232,22 +234,45 @@ public class Home {
         }
     }
     
-    public static void main(String[] args) {
-        //Schedule a job for the event-dispatching thread:
-        //creating and showing this application's GUI.
-        javax.swing.SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-            	try{
-            		
-            		Home fr = new Home();
-                    fr.setVisible(true);
-                    
-            	}catch(Exception e){
-                    e.printStackTrace();
-                }
-            }
-        });
-    }
+	public static void main(String[] args) {
+		// Schedule a job for the event-dispatching thread:
+		// creating and showing this application's GUI.
+		// -tx transmitter_file1_path transmitter_file2_path -rx receiver_file_path
+
+		if (args != null && args.length >= 4 && args[0].equalsIgnoreCase("-tx")) {
+			List<String> txModels = new ArrayList<String>();
+			List<String> rxModels = new ArrayList<String>();
+			boolean rxPath = false;
+			for (int i = 1; i < args.length; i++) {
+				if (args[i].equalsIgnoreCase("-rx")) {
+					rxPath = true;
+					continue;
+				}
+				if (rxPath) {
+					rxModels.add(args[i]);
+				} else {
+					txModels.add(args[i]);
+				}
+
+			}
+			Exec.ExecuteCompatiabilityTestFromCLI(txModels, rxModels);
+		} else {
+			javax.swing.SwingUtilities.invokeLater(new Runnable() {
+				public void run() {
+					try {
+
+						Home fr = new Home();
+						fr.setVisible(true);
+
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}
+			});
+		}
+
+	}
+	
     protected void setVisible(boolean b) {
 		// TODO Auto-generated method stub		
 	}
